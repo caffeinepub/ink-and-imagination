@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Playfair Display";
+  src: url("/assets/fonts/PlayfairDisplay.woff2") format("woff2");
+  font-weight: 400 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Satoshi";
+  src: url("/assets/fonts/Satoshi.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    /* Manga dark theme - OKLCH values */
+    --background: 0.08 0 0;
+    --foreground: 0.95 0 0;
+    --card: 0.11 0.005 280;
+    --card-foreground: 0.95 0 0;
+    --popover: 0.11 0.005 280;
+    --popover-foreground: 0.95 0 0;
+    /* Gold primary */
+    --primary: 0.72 0.12 75;
+    --primary-foreground: 0.08 0 0;
+    /* Deep crimson secondary */
+    --secondary: 0.38 0.16 20;
+    --secondary-foreground: 0.95 0 0;
+    --muted: 0.15 0.005 280;
+    --muted-foreground: 0.58 0.01 280;
+    --accent: 0.38 0.16 20;
+    --accent-foreground: 0.95 0 0;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.22 0.008 280;
+    --input: 0.15 0.008 280;
+    --ring: 0.72 0.12 75;
+    --chart-1: 0.72 0.12 75;
+    --chart-2: 0.38 0.16 20;
+    --chart-3: 0.55 0.15 280;
+    --chart-4: 0.65 0.18 155;
+    --chart-5: 0.7 0.16 45;
+    --sidebar: 0.1 0.005 280;
+    --sidebar-foreground: 0.95 0 0;
+    --sidebar-primary: 0.72 0.12 75;
+    --sidebar-primary-foreground: 0.08 0 0;
+    --sidebar-accent: 0.38 0.16 20;
+    --sidebar-accent-foreground: 0.95 0 0;
+    --sidebar-border: 0.22 0.008 280;
+    --sidebar-ring: 0.72 0.12 75;
+    /* Custom manga tokens */
+    --manga-bg: #0b0b0c;
+    --manga-card: #141416;
+    --manga-card-alt: #1a1a1d;
+    --manga-gold: #c7a24a;
+    --manga-gold-dim: #b8923d;
+    --manga-red: #a12b2b;
+    --manga-red-dark: #8f2424;
+    --manga-text: #f2f2f2;
+    --manga-muted: #a6a6aa;
+    --manga-border: #2a2a2e;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    background-color: var(--manga-bg);
+    color: var(--manga-text);
+    font-family: "Satoshi", "Inter", sans-serif;
+  }
+
+  .font-display {
+    font-family: "Bricolage Grotesque", "Impact", sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .font-serif-display {
+    font-family: "Playfair Display", Georgia, serif;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+}
+
+@layer utilities {
+  .manga-card {
+    background-color: var(--manga-card);
+    border: 1px solid var(--manga-gold);
+    border-radius: 0.75rem;
+  }
+
+  .manga-btn-primary {
+    background-color: var(--manga-red);
+    border: 1px solid var(--manga-gold);
+    color: var(--manga-text);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    border-radius: 0.5rem;
+    padding: 0.625rem 1.5rem;
+    transition: background-color 0.2s, transform 0.1s;
+  }
+
+  .manga-btn-primary:hover {
+    background-color: var(--manga-red-dark);
+    transform: translateY(-1px);
+  }
+
+  .manga-btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--manga-gold);
+    color: var(--manga-gold);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    transition: all 0.2s;
+  }
+
+  .manga-btn-outline:hover {
+    background-color: var(--manga-gold);
+    color: var(--manga-bg);
+  }
+
+  .gold-border {
+    border: 1px solid var(--manga-gold);
+  }
+
+  .gold-text {
+    color: var(--manga-gold);
+  }
+
+  .red-text {
+    color: var(--manga-red);
+  }
+
+  .manga-section-heading {
+    font-family: "Bricolage Grotesque", "Impact", sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--manga-text);
+    font-size: 1.5rem;
+  }
+
+  .speed-lines {
+    background: radial-gradient(
+        ellipse at 60% 50%,
+        rgba(161, 43, 43, 0.15) 0%,
+        rgba(26, 10, 26, 0.8) 40%,
+        rgba(11, 11, 12, 0.95) 80%
+      ),
+      repeating-conic-gradient(
+        from 0deg at 60% 50%,
+        rgba(199, 162, 74, 0.03) 0deg 1deg,
+        transparent 1deg 4deg
+      );
+  }
+}
