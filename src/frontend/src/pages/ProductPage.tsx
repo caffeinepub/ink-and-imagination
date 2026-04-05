@@ -1,40 +1,27 @@
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
-import { BookOpen, ChevronLeft, Package, ShoppingCart } from "lucide-react";
-import { useEffect, useState } from "react";
-import { backend } from "../actorClient";
-import type { MangaItem } from "../actorClient";
+import { Link, useParams } from "@tanstack/react-router";
+import { ChevronLeft, Package, ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import MangaCard from "../components/MangaCard";
 import { useCart } from "../context/CartContext";
+import { useGetMangaById, useListAllManga } from "../hooks/useQueries";
+
+const SKELETON_WIDTHS = ["80%", "40%", "60%", "100%", "100%", "100%"];
 
 export default function ProductPage() {
   const { id } = useParams({ strict: false }) as { id: string };
-  const navigate = useNavigate();
   const { addToCart } = useCart();
 
-  const [manga, setManga] = useState<MangaItem | null>(null);
-  const [related, setRelated] = useState<MangaItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: manga, isLoading } = useGetMangaById(id);
+  const { data: allManga = [] } = useListAllManga();
+
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      if (!id) return;
-      setLoading(true);
-      setAdded(false);
-      try {
-        const item = await backend.getMangaById(BigInt(id));
-        setManga(item);
-        const relItems = await backend.getByGenre(item.genre);
-        setRelated(relItems.filter((m) => m.id !== item.id).slice(0, 4));
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [id]);
+  const related = manga
+    ? allManga
+        .filter((m) => m.genre === manga.genre && m.id !== manga.id)
+        .slice(0, 4)
+    : [];
 
   const handleAddToCart = () => {
     if (!manga) return;
@@ -43,7 +30,7 @@ export default function ProductPage() {
     setTimeout(() => setAdded(false), 2000);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -58,21 +45,12 @@ export default function ProductPage() {
             }}
           />
           <div className="flex flex-col gap-4">
-            {(
-              [
-                { w: 80, k: "title" },
-                { w: 40, k: "author" },
-                { w: 60, k: "genre" },
-                { w: 100, k: "syn1" },
-                { w: 100, k: "syn2" },
-                { w: 100, k: "btn" },
-              ] as { w: number; k: string }[]
-            ).map(({ w, k }) => (
+            {SKELETON_WIDTHS.map((w) => (
               <div
-                key={k}
+                key={w + Math.random()}
                 className="h-6 rounded"
                 style={{
-                  width: `${w}%`,
+                  width: w,
                   background:
                     "linear-gradient(90deg, #1A1A1D 25%, #222226 50%, #1A1A1D 75%)",
                   backgroundSize: "200% 100%",
@@ -99,18 +77,22 @@ export default function ProductPage() {
     );
   }
 
+  const coverUrl =
+    manga.coverImage ||
+    `https://placehold.co/380x510/141416/C7A24A?text=${encodeURIComponent(manga.title)}`;
+
   return (
     <div style={{ backgroundColor: "#0B0B0C", minHeight: "100vh" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
-        <button
-          type="button"
-          onClick={() => navigate({ to: "/shop" })}
-          className="flex items-center gap-2 text-sm mb-8 transition-colors"
+        <Link
+          to="/shop"
+          className="inline-flex items-center gap-2 text-sm mb-8 transition-colors"
           style={{ color: "#A6A6AA" }}
+          data-ocid="product.back.link"
         >
           <ChevronLeft className="w-4 h-4" /> Back to Shop
-        </button>
+        </Link>
 
         {/* Product detail */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
@@ -126,7 +108,7 @@ export default function ProductPage() {
               }}
             >
               <img
-                src={manga.coverImage.getDirectURL()}
+                src={coverUrl}
                 alt={manga.title}
                 className="w-full h-full object-cover"
                 style={{ aspectRatio: "3/4" }}
@@ -134,14 +116,6 @@ export default function ProductPage() {
                   e.currentTarget.src = `https://placehold.co/380x510/141416/C7A24A?text=${encodeURIComponent(manga.title)}`;
                 }}
               />
-              {manga.isNew && (
-                <div
-                  className="absolute top-3 right-3 text-xs font-bold uppercase px-3 py-1 rounded"
-                  style={{ backgroundColor: "#A12B2B", color: "#F2F2F2" }}
-                >
-                  NEW
-                </div>
-              )}
             </div>
           </div>
 
@@ -170,33 +144,24 @@ export default function ProductPage() {
             </p>
 
             <p className="text-sm leading-relaxed" style={{ color: "#A6A6AA" }}>
-              {manga.synopsis}
+              {manga.description}
             </p>
 
-            {/* Volume info */}
-            <div className="flex gap-6">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" style={{ color: "#C7A24A" }} />
-                <span className="text-sm" style={{ color: "#A6A6AA" }}>
-                  <strong style={{ color: "#F2F2F2" }}>
-                    {Number(manga.volumeCount)}
-                  </strong>{" "}
-                  Volumes
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4" style={{ color: "#C7A24A" }} />
-                <span className="text-sm" style={{ color: "#A6A6AA" }}>
-                  Stock:{" "}
-                  <strong
-                    style={{
-                      color: Number(manga.stock) > 0 ? "#4ade80" : "#f87171",
-                    }}
-                  >
-                    {Number(manga.stock) > 0 ? "In Stock" : "Out of Stock"}
-                  </strong>
-                </span>
-              </div>
+            {/* Stock info */}
+            <div className="flex items-center gap-2">
+              <Package className="w-4 h-4" style={{ color: "#C7A24A" }} />
+              <span className="text-sm" style={{ color: "#A6A6AA" }}>
+                Stock:{" "}
+                <strong
+                  style={{
+                    color: Number(manga.stock) > 0 ? "#4ade80" : "#f87171",
+                  }}
+                >
+                  {Number(manga.stock) > 0
+                    ? `${Number(manga.stock)} available`
+                    : "Out of Stock"}
+                </strong>
+              </span>
             </div>
 
             {/* Divider */}
@@ -204,7 +169,7 @@ export default function ProductPage() {
 
             {/* Price */}
             <p className="font-display text-4xl" style={{ color: "#F2F2F2" }}>
-              ${manga.price.toFixed(2)}
+              ₹{manga.price.toFixed(2)}
             </p>
 
             {/* Quantity + Add to cart */}
@@ -217,6 +182,7 @@ export default function ProductPage() {
                   <button
                     type="button"
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    data-ocid="product.qty.button"
                     className="w-10 h-10 text-xl flex items-center justify-center transition-colors"
                     style={{ backgroundColor: "#1A1A1D", color: "#F2F2F2" }}
                   >
@@ -233,6 +199,7 @@ export default function ProductPage() {
                     onClick={() =>
                       setQty((q) => Math.min(Number(manga.stock), q + 1))
                     }
+                    data-ocid="product.qty.button"
                     className="w-10 h-10 text-xl flex items-center justify-center transition-colors"
                     style={{ backgroundColor: "#1A1A1D", color: "#F2F2F2" }}
                   >
@@ -243,6 +210,7 @@ export default function ProductPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
+                  data-ocid="product.add_to_cart.primary_button"
                   className="flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-bold text-sm uppercase tracking-wide transition-all duration-200"
                   style={{
                     backgroundColor: added ? "#2A6A2A" : "#A12B2B",
@@ -260,6 +228,7 @@ export default function ProductPage() {
               to="/cart"
               className="text-xs uppercase tracking-widest text-center"
               style={{ color: "#C7A24A" }}
+              data-ocid="product.cart.link"
             >
               View Cart →
             </Link>
@@ -281,7 +250,7 @@ export default function ProductPage() {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {related.map((m) => (
-                <MangaCard key={String(m.id)} manga={m} />
+                <MangaCard key={m.id} manga={m} />
               ))}
             </div>
           </section>

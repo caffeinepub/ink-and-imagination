@@ -11,6 +11,7 @@ export default function CartPage() {
       <div
         className="flex flex-col items-center justify-center min-h-[60vh] gap-6 px-4"
         style={{ backgroundColor: "#0B0B0C" }}
+        data-ocid="cart.empty_state"
       >
         <div
           className="w-24 h-24 rounded-full flex items-center justify-center"
@@ -25,12 +26,13 @@ export default function CartPage() {
           className="text-sm text-center max-w-sm"
           style={{ color: "#A6A6AA" }}
         >
-          Looks like you haven&apos;t added any manga yet. Start exploring the
-          shop to find your next obsession.
+          You haven&apos;t added any manga yet. Browse our original collection
+          to find your next favourite series.
         </p>
         <Link
           to="/shop"
           className="manga-btn-primary inline-flex items-center gap-2"
+          data-ocid="cart.shop.primary_button"
         >
           Browse Manga <ChevronRight className="w-4 h-4" />
         </Link>
@@ -61,11 +63,15 @@ export default function CartPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart items */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            {cartItems.map(({ manga, quantity }) => (
+          <div
+            className="lg:col-span-2 flex flex-col gap-4"
+            data-ocid="cart.list"
+          >
+            {cartItems.map(({ manga, quantity }, idx) => (
               <div
-                key={String(manga.id)}
+                key={manga.id}
                 className="flex gap-4 p-4 rounded-xl"
+                data-ocid={`cart.item.${idx + 1}`}
                 style={{
                   backgroundColor: "#141416",
                   border: "1px solid #2A2A2E",
@@ -73,12 +79,15 @@ export default function CartPage() {
               >
                 {/* Thumbnail */}
                 <Link
-                  to="/product/$id"
-                  params={{ id: String(manga.id) }}
+                  to="/manga/$id"
+                  params={{ id: manga.id }}
                   className="shrink-0"
                 >
                   <img
-                    src={manga.coverImage.getDirectURL()}
+                    src={
+                      manga.coverImage ||
+                      `https://placehold.co/64x96/141416/C7A24A?text=${encodeURIComponent(manga.title)}`
+                    }
                     alt={manga.title}
                     className="w-16 h-24 object-cover rounded-lg"
                     style={{ border: "1px solid #C7A24A" }}
@@ -92,7 +101,7 @@ export default function CartPage() {
                 {/* Info */}
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
-                    <Link to="/product/$id" params={{ id: String(manga.id) }}>
+                    <Link to="/manga/$id" params={{ id: manga.id }}>
                       <h3
                         className="font-bold text-sm hover:underline"
                         style={{ color: "#F2F2F2" }}
@@ -120,6 +129,7 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => updateQuantity(manga.id, quantity - 1)}
+                        data-ocid={`cart.qty.button.${idx + 1}`}
                         className="w-8 h-8 flex items-center justify-center text-sm"
                         style={{ backgroundColor: "#1A1A1D", color: "#F2F2F2" }}
                       >
@@ -134,8 +144,9 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => updateQuantity(manga.id, quantity + 1)}
+                        data-ocid={`cart.qty.button.${idx + 1}`}
                         className="w-8 h-8 flex items-center justify-center text-sm"
-                        style={{ backgroundColor: "#1A1A1D", color: "#F2F2F6" }}
+                        style={{ backgroundColor: "#1A1A1D", color: "#F2F2F2" }}
                       >
                         +
                       </button>
@@ -146,7 +157,7 @@ export default function CartPage() {
                       className="font-bold text-sm"
                       style={{ color: "#F2F2F2" }}
                     >
-                      ${(manga.price * quantity).toFixed(2)}
+                      ₹{(manga.price * quantity).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -155,6 +166,7 @@ export default function CartPage() {
                 <button
                   type="button"
                   onClick={() => removeFromCart(manga.id)}
+                  data-ocid={`cart.delete_button.${idx + 1}`}
                   className="self-start p-1.5 rounded transition-colors"
                   style={{ color: "#A6A6AA" }}
                   aria-label="Remove item"
@@ -168,6 +180,7 @@ export default function CartPage() {
             <button
               type="button"
               onClick={clearCart}
+              data-ocid="cart.clear.button"
               className="self-start text-xs uppercase tracking-widest mt-2"
               style={{ color: "#A6A6AA" }}
             >
@@ -183,6 +196,7 @@ export default function CartPage() {
                 backgroundColor: "#141416",
                 border: "1px solid #C7A24A",
               }}
+              data-ocid="cart.summary.card"
             >
               <h2 className="manga-section-heading text-lg mb-6">
                 Order Summary
@@ -192,7 +206,7 @@ export default function CartPage() {
                 <div className="flex justify-between text-sm">
                   <span style={{ color: "#A6A6AA" }}>Subtotal</span>
                   <span style={{ color: "#F2F2F2" }}>
-                    ${cartTotal.toFixed(2)}
+                    ₹{cartTotal.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -209,13 +223,14 @@ export default function CartPage() {
                 <div className="flex justify-between font-bold">
                   <span style={{ color: "#F2F2F2" }}>Total</span>
                   <span className="text-xl" style={{ color: "#C7A24A" }}>
-                    ${cartTotal.toFixed(2)}
+                    ₹{cartTotal.toFixed(2)}
                   </span>
                 </div>
               </div>
 
               <button
                 type="button"
+                data-ocid="cart.checkout.primary_button"
                 className="manga-btn-primary w-full mt-6 flex items-center justify-center gap-2"
               >
                 Proceed to Checkout <ChevronRight className="w-4 h-4" />
@@ -223,6 +238,7 @@ export default function CartPage() {
 
               <Link
                 to="/shop"
+                data-ocid="cart.continue.link"
                 className="block text-center text-xs uppercase tracking-widest mt-4"
                 style={{ color: "#A6A6AA" }}
               >

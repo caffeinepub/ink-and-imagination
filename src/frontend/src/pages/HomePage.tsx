@@ -1,49 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
-import { backend } from "../actorClient";
-import type { MangaItem } from "../actorClient";
 import MangaCard from "../components/MangaCard";
 import SkeletonCard from "../components/SkeletonCard";
+import { useListAllManga } from "../hooks/useQueries";
+
+const skeletonKeys = ["sk1", "sk2", "sk3", "sk4"];
 
 export default function HomePage() {
-  const [allManga, setAllManga] = useState<MangaItem[]>([]);
-  const [featured, setFeatured] = useState<MangaItem[]>([]);
-  const [newArrivals, setNewArrivals] = useState<MangaItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: allManga = [], isLoading } = useListAllManga();
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        let all = await backend.getAllManga();
-        if (all.length === 0) {
-          await backend.seedSampleData();
-          all = await backend.getAllManga();
-        }
-        setAllManga(all);
-        setFeatured(all.filter((m) => m.isFeatured).slice(0, 8));
-        setNewArrivals(all.filter((m) => m.isNew).slice(0, 4));
-      } catch (err) {
-        console.error("Failed to load manga", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-  const skeletonKeys4 = ["sk1", "sk2", "sk3", "sk4"];
-  const skeletonKeys8 = [
-    "sk1",
-    "sk2",
-    "sk3",
-    "sk4",
-    "sk5",
-    "sk6",
-    "sk7",
-    "sk8",
-  ];
+  const featured = allManga.slice(0, 6);
+  const recent = allManga.slice(0, 4);
 
   return (
     <div style={{ backgroundColor: "#0B0B0C" }}>
@@ -73,40 +40,40 @@ export default function HomePage() {
                   className="text-xs font-bold uppercase tracking-widest mb-3"
                   style={{ color: "#C7A24A" }}
                 >
-                  The Ultimate Manga Destination
+                  UNLEASH THE POWER OF IMAGINATION
                 </p>
                 <h1
                   className="font-display text-6xl sm:text-7xl lg:text-8xl leading-none"
                   style={{ color: "#F2F2F2" }}
                 >
-                  UNLEASH
+                  INK &amp;
                   <br />
-                  THE POWER
-                  <br />
-                  <span style={{ color: "#A12B2B" }}>OF IMAGINATION</span>
+                  <span style={{ color: "#A12B2B" }}>IMAGINATION</span>
                 </h1>
               </div>
               <p
                 className="text-base max-w-md leading-relaxed"
                 style={{ color: "#A6A6AA" }}
               >
-                Explore thousands of manga titles from the world&apos;s greatest
-                artists. From epic shonen battles to thrilling adventures — find
-                your next obsession.
+                We create original manga and bring it directly to you. Every
+                title in our collection is crafted by our team — built from
+                passion, published with purpose.
               </p>
               <div className="flex gap-4 flex-wrap">
                 <Link
                   to="/shop"
                   className="manga-btn-primary inline-flex items-center gap-2"
+                  data-ocid="home.shop.primary_button"
                 >
-                  Shop New Releases
+                  Shop Now
                   <ChevronRight className="w-4 h-4" />
                 </Link>
                 <Link
-                  to="/shop"
+                  to="/about"
                   className="manga-btn-outline inline-flex items-center gap-2"
+                  data-ocid="home.about.secondary_button"
                 >
-                  Browse All Manga
+                  Our Story
                 </Link>
               </div>
             </div>
@@ -117,18 +84,18 @@ export default function HomePage() {
                 className="text-xs font-bold uppercase tracking-widest mb-4"
                 style={{ color: "#C7A24A" }}
               >
-                Explore Featured Titles
+                Featured Titles
               </p>
-              {loading ? (
+              {isLoading ? (
                 <div className="grid grid-cols-2 gap-3">
-                  {skeletonKeys4.map((key) => (
+                  {skeletonKeys.map((key) => (
                     <SkeletonCard key={key} />
                   ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {featured.slice(0, 4).map((manga) => (
-                    <MangaCard key={String(manga.id)} manga={manga} compact />
+                    <MangaCard key={manga.id} manga={manga} compact />
                   ))}
                 </div>
               )}
@@ -145,23 +112,25 @@ export default function HomePage() {
             to="/shop"
             className="text-xs font-bold uppercase tracking-widest flex items-center gap-1 transition-colors"
             style={{ color: "#C7A24A" }}
+            data-ocid="home.shop.link"
           >
             View All <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {skeletonKeys4.map((key) => (
+            {skeletonKeys.map((key) => (
               <SkeletonCard key={key} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {(newArrivals.length > 0 ? newArrivals : allManga.slice(0, 4)).map(
-              (manga) => (
-                <MangaCard key={String(manga.id)} manga={manga} />
-              ),
-            )}
+          <div
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+            data-ocid="home.manga.list"
+          >
+            {recent.map((manga) => (
+              <MangaCard key={manga.id} manga={manga} />
+            ))}
           </div>
         )}
       </section>
@@ -170,28 +139,30 @@ export default function HomePage() {
       <section className="py-16" style={{ backgroundColor: "#0E0E10" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="manga-section-heading">Featured Titles</h2>
+            <h2 className="manga-section-heading">Our Collection</h2>
             <Link
               to="/shop"
               className="text-xs font-bold uppercase tracking-widest flex items-center gap-1"
               style={{ color: "#C7A24A" }}
+              data-ocid="home.collection.link"
             >
               View All <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
-          {loading ? (
+          {isLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {skeletonKeys8.map((key) => (
+              {[...skeletonKeys, "sk5", "sk6", "sk7", "sk8"].map((key) => (
                 <SkeletonCard key={key} />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {(featured.length > 0 ? featured : allManga)
-                .slice(0, 8)
-                .map((manga) => (
-                  <MangaCard key={String(manga.id)} manga={manga} />
-                ))}
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+              data-ocid="home.collection.list"
+            >
+              {allManga.slice(0, 8).map((manga) => (
+                <MangaCard key={manga.id} manga={manga} />
+              ))}
             </div>
           )}
         </div>
@@ -218,12 +189,13 @@ export default function HomePage() {
             className="text-base mb-8 max-w-xl mx-auto"
             style={{ color: "#A6A6AA" }}
           >
-            Join thousands of manga fans who trust Ink and Imagination for their
-            collection.
+            Original stories, original art — created by us and delivered
+            straight to you. Start your collection today.
           </p>
           <Link
             to="/shop"
             className="manga-btn-primary inline-flex items-center gap-2"
+            data-ocid="home.cta.primary_button"
           >
             Explore the Shop <ChevronRight className="w-4 h-4" />
           </Link>

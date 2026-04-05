@@ -89,33 +89,30 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface MangaItem {
-    id: bigint;
-    title: string;
-    createdAt: bigint;
-    author: string;
-    coverImage: ExternalBlob;
-    stock: bigint;
-    synopsis: string;
-    isFeatured: boolean;
-    genre: string;
-    isNew: boolean;
-    price: number;
-    volumeCount: bigint;
-}
-export interface _CaffeineStorageRefillInformation {
-    proposed_top_up_amount?: bigint;
+export interface UserProfile {
+    name: string;
 }
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
 }
-export interface UserProfile {
-    name: string;
+export interface Manga {
+    id: string;
+    title: string;
+    createdAt: bigint;
+    description: string;
+    author: string;
+    coverImage: string;
+    stock: bigint;
+    genre: string;
+    price: number;
 }
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
+}
+export interface _CaffeineStorageRefillInformation {
+    proposed_top_up_amount?: bigint;
 }
 export enum UserRole {
     admin = "admin",
@@ -130,25 +127,21 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
-    addManga(newManga: MangaItem): Promise<MangaItem>;
+    addManga(manga: Manga): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    getAllManga(): Promise<Array<MangaItem>>;
-    getByGenre(genre: string): Promise<Array<MangaItem>>;
-    getByPriceRange(minPrice: number, maxPrice: number): Promise<Array<MangaItem>>;
+    clearAllManga(): Promise<void>;
+    deleteManga(id: string): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getFeaturedManga(): Promise<Array<MangaItem>>;
-    getMangaById(id: bigint): Promise<MangaItem>;
-    getNewArrivals(): Promise<Array<MangaItem>>;
+    getMangaById(id: string): Promise<Manga>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
-    removeManga(id: bigint): Promise<void>;
+    listAllManga(): Promise<Array<Manga>>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    searchByTitle(title: string): Promise<Array<MangaItem>>;
-    seedSampleData(): Promise<void>;
-    updateManga(manga: MangaItem): Promise<void>;
+    seedManga(): Promise<void>;
+    updateManga(manga: Manga): Promise<void>;
 }
-import type { ExternalBlob as _ExternalBlob, MangaItem as _MangaItem, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -249,158 +242,116 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async addManga(arg0: MangaItem): Promise<MangaItem> {
+    async addManga(arg0: Manga): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.addManga(await to_candid_MangaItem_n8(this._uploadFile, this._downloadFile, arg0));
-                return from_candid_MangaItem_n11(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.addManga(await to_candid_MangaItem_n8(this._uploadFile, this._downloadFile, arg0));
-            return from_candid_MangaItem_n11(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n14(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.addManga(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n14(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.addManga(arg0);
             return result;
         }
     }
-    async getAllManga(): Promise<Array<MangaItem>> {
+    async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.getAllManga();
-                return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n8(this._uploadFile, this._downloadFile, arg1));
+                return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getAllManga();
-            return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n8(this._uploadFile, this._downloadFile, arg1));
+            return result;
         }
     }
-    async getByGenre(arg0: string): Promise<Array<MangaItem>> {
+    async clearAllManga(): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.getByGenre(arg0);
-                return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.clearAllManga();
+                return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getByGenre(arg0);
-            return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.clearAllManga();
+            return result;
         }
     }
-    async getByPriceRange(arg0: number, arg1: number): Promise<Array<MangaItem>> {
+    async deleteManga(arg0: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.getByPriceRange(arg0, arg1);
-                return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.deleteManga(arg0);
+                return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getByPriceRange(arg0, arg1);
-            return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.deleteManga(arg0);
+            return result;
         }
     }
     async getCallerUserProfile(): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n18(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n18(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n11(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getFeaturedManga(): Promise<Array<MangaItem>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getFeaturedManga();
-                return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getFeaturedManga();
-            return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getMangaById(arg0: bigint): Promise<MangaItem> {
+    async getMangaById(arg0: string): Promise<Manga> {
         if (this.processError) {
             try {
                 const result = await this.actor.getMangaById(arg0);
-                return from_candid_MangaItem_n11(this._uploadFile, this._downloadFile, result);
+                return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getMangaById(arg0);
-            return from_candid_MangaItem_n11(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async getNewArrivals(): Promise<Array<MangaItem>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getNewArrivals();
-                return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getNewArrivals();
-            return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
+            return result;
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n17(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -417,17 +368,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async removeManga(arg0: bigint): Promise<void> {
+    async listAllManga(): Promise<Array<Manga>> {
         if (this.processError) {
             try {
-                const result = await this.actor.removeManga(arg0);
+                const result = await this.actor.listAllManga();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.removeManga(arg0);
+            const result = await this.actor.listAllManga();
             return result;
         }
     }
@@ -445,62 +396,42 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async searchByTitle(arg0: string): Promise<Array<MangaItem>> {
+    async seedManga(): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.searchByTitle(arg0);
-                return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.searchByTitle(arg0);
-            return from_candid_vec_n16(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async seedSampleData(): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.seedSampleData();
+                const result = await this.actor.seedManga();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.seedSampleData();
+            const result = await this.actor.seedManga();
             return result;
         }
     }
-    async updateManga(arg0: MangaItem): Promise<void> {
+    async updateManga(arg0: Manga): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateManga(await to_candid_MangaItem_n8(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.updateManga(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateManga(await to_candid_MangaItem_n8(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.updateManga(arg0);
             return result;
         }
     }
 }
-async function from_candid_ExternalBlob_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
-    return await _downloadFile(value);
-}
-async function from_candid_MangaItem_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MangaItem): Promise<MangaItem> {
-    return await from_candid_record_n12(_uploadFile, _downloadFile, value);
-}
-function from_candid_UserRole_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n19(_uploadFile, _downloadFile, value);
+function from_candid_UserRole_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n12(_uploadFile, _downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -508,48 +439,6 @@ function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 }
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
     return value.length === 0 ? null : value[0];
-}
-async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: bigint;
-    title: string;
-    createdAt: bigint;
-    author: string;
-    coverImage: _ExternalBlob;
-    stock: bigint;
-    synopsis: string;
-    isFeatured: boolean;
-    genre: string;
-    isNew: boolean;
-    price: number;
-    volumeCount: bigint;
-}): Promise<{
-    id: bigint;
-    title: string;
-    createdAt: bigint;
-    author: string;
-    coverImage: ExternalBlob;
-    stock: bigint;
-    synopsis: string;
-    isFeatured: boolean;
-    genre: string;
-    isNew: boolean;
-    price: number;
-    volumeCount: bigint;
-}> {
-    return {
-        id: value.id,
-        title: value.title,
-        createdAt: value.createdAt,
-        author: value.author,
-        coverImage: await from_candid_ExternalBlob_n13(_uploadFile, _downloadFile, value.coverImage),
-        stock: value.stock,
-        synopsis: value.synopsis,
-        isFeatured: value.isFeatured,
-        genre: value.genre,
-        isNew: value.isNew,
-        price: value.price,
-        volumeCount: value.volumeCount
-    };
 }
 function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     success: [] | [boolean];
@@ -563,7 +452,7 @@ function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint
         topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
     };
 }
-function from_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -572,17 +461,8 @@ function from_candid_variant_n19(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-async function from_candid_vec_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_MangaItem>): Promise<Array<MangaItem>> {
-    return await Promise.all(value.map(async (x)=>await from_candid_MangaItem_n11(_uploadFile, _downloadFile, x)));
-}
-async function to_candid_ExternalBlob_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
-    return await _uploadFile(value);
-}
-async function to_candid_MangaItem_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: MangaItem): Promise<_MangaItem> {
-    return await to_candid_record_n9(_uploadFile, _downloadFile, value);
-}
-function to_candid_UserRole_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
-    return to_candid_variant_n15(_uploadFile, _downloadFile, value);
+function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
+    return to_candid_variant_n9(_uploadFile, _downloadFile, value);
 }
 function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
     return to_candid_record_n3(_uploadFile, _downloadFile, value);
@@ -599,49 +479,7 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-async function to_candid_record_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: bigint;
-    title: string;
-    createdAt: bigint;
-    author: string;
-    coverImage: ExternalBlob;
-    stock: bigint;
-    synopsis: string;
-    isFeatured: boolean;
-    genre: string;
-    isNew: boolean;
-    price: number;
-    volumeCount: bigint;
-}): Promise<{
-    id: bigint;
-    title: string;
-    createdAt: bigint;
-    author: string;
-    coverImage: _ExternalBlob;
-    stock: bigint;
-    synopsis: string;
-    isFeatured: boolean;
-    genre: string;
-    isNew: boolean;
-    price: number;
-    volumeCount: bigint;
-}> {
-    return {
-        id: value.id,
-        title: value.title,
-        createdAt: value.createdAt,
-        author: value.author,
-        coverImage: await to_candid_ExternalBlob_n10(_uploadFile, _downloadFile, value.coverImage),
-        stock: value.stock,
-        synopsis: value.synopsis,
-        isFeatured: value.isFeatured,
-        genre: value.genre,
-        isNew: value.isNew,
-        price: value.price,
-        volumeCount: value.volumeCount
-    };
-}
-function to_candid_variant_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
+function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
     admin: null;
 } | {
     user: null;

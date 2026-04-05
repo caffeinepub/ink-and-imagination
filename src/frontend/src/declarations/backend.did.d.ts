@@ -10,20 +10,16 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export type ExternalBlob = Uint8Array;
-export interface MangaItem {
-  'id' : bigint,
+export interface Manga {
+  'id' : string,
   'title' : string,
   'createdAt' : bigint,
+  'description' : string,
   'author' : string,
-  'coverImage' : ExternalBlob,
+  'coverImage' : string,
   'stock' : bigint,
-  'synopsis' : string,
-  'isFeatured' : boolean,
   'genre' : string,
-  'isNew' : boolean,
   'price' : number,
-  'volumeCount' : bigint,
 }
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
@@ -57,23 +53,19 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
-  'addManga' : ActorMethod<[MangaItem], MangaItem>,
+  'addManga' : ActorMethod<[Manga], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'getAllManga' : ActorMethod<[], Array<MangaItem>>,
-  'getByGenre' : ActorMethod<[string], Array<MangaItem>>,
-  'getByPriceRange' : ActorMethod<[number, number], Array<MangaItem>>,
+  'clearAllManga' : ActorMethod<[], undefined>,
+  'deleteManga' : ActorMethod<[string], undefined>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getFeaturedManga' : ActorMethod<[], Array<MangaItem>>,
-  'getMangaById' : ActorMethod<[bigint], MangaItem>,
-  'getNewArrivals' : ActorMethod<[], Array<MangaItem>>,
+  'getMangaById' : ActorMethod<[string], Manga>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'removeManga' : ActorMethod<[bigint], undefined>,
+  'listAllManga' : ActorMethod<[], Array<Manga>>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'searchByTitle' : ActorMethod<[string], Array<MangaItem>>,
-  'seedSampleData' : ActorMethod<[], undefined>,
-  'updateManga' : ActorMethod<[MangaItem], undefined>,
+  'seedManga' : ActorMethod<[], undefined>,
+  'updateManga' : ActorMethod<[Manga], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

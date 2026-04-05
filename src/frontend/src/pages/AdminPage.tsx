@@ -1,24 +1,26 @@
-import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalBlob } from "../actorClient";
-import type { MangaItem } from "../actorClient";
-import { backend } from "../actorClient";
+import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import type { Manga } from "../backend";
+import {
+  useAddManga,
+  useClearAllManga,
+  useDeleteManga,
+  useListAllManga,
+  useUpdateManga,
+} from "../hooks/useQueries";
 
 const ADMIN_PASSWORD = "Ink20152026";
 
 const GENRES = [
   "Action",
+  "Adventure",
   "Fantasy",
   "Horror",
+  "Mystery",
   "Sci-Fi",
-  "Thriller",
-  "Slice of Life",
-  "Shounen",
   "Seinen",
-  "Dark Fantasy",
-  "Historical",
-  "Comedy",
-  "Adventure",
+  "Shojo",
+  "Shonen",
 ];
 
 interface FormState {
@@ -26,12 +28,9 @@ interface FormState {
   author: string;
   genre: string;
   price: string;
-  coverImageUrl: string;
-  synopsis: string;
-  volumeCount: string;
+  coverImage: string;
+  description: string;
   stock: string;
-  isFeatured: boolean;
-  isNew: boolean;
 }
 
 const emptyForm: FormState = {
@@ -39,15 +38,10 @@ const emptyForm: FormState = {
   author: "",
   genre: "Action",
   price: "",
-  coverImageUrl: "",
-  synopsis: "",
-  volumeCount: "1",
+  coverImage: "",
+  description: "",
   stock: "10",
-  isFeatured: false,
-  isNew: false,
 };
-
-const spinnerCss = "@keyframes spin { to { transform: rotate(360deg); } }";
 
 // ─── Password Gate ────────────────────────────────────────────────────────────
 
@@ -80,7 +74,6 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
       }}
     >
       <style>{`
-        ${spinnerCss}
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           20%, 60% { transform: translateX(-8px); }
@@ -191,6 +184,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
                 setError("");
               }}
               placeholder="Enter admin password"
+              data-ocid="admin.password.input"
               style={{
                 width: "100%",
                 backgroundColor: "#1D1D20",
@@ -205,6 +199,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
             />
             {error && (
               <p
+                data-ocid="admin.password.error_state"
                 style={{
                   color: "#f87171",
                   fontSize: "0.8rem",
@@ -246,124 +241,103 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
 
 export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
-  const [mangaList, setMangaList] = useState<MangaItem[]>([]);
-  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<bigint | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    msg: string;
+  } | null>(null);
+  const clearedRef = useRef(false);
 
-  const loadManga = useCallback(async () => {
-    setLoading(true);
-    try {
-      const all = await backend.getAllManga();
-      setMangaList(all);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: mangaList = [], isLoading } = useListAllManga();
+  const addManga = useAddManga();
+  const updateManga = useUpdateManga();
+  const deleteManga = useDeleteManga();
+  const clearAllManga = useClearAllManga();
 
+  // Auto-clear any leftover manga on first unlock
   useEffect(() => {
-    if (!unlocked) return;
-    async function init() {
-      try {
-        await backend.seedSampleData();
-      } catch {
-        // already seeded — ignore
-      }
-      await loadManga();
+    if (unlocked && !isLoading && mangaList.length > 0 && !clearedRef.current) {
+      clearedRef.current = true;
+      clearAllManga.mutate();
     }
-    void init();
-  }, [unlocked, loadManga]);
+  }, [unlocked, isLoading, mangaList.length, clearAllManga]);
 
   if (!unlocked) {
     return <PasswordGate onUnlock={() => setUnlocked(true)} />;
   }
 
-  // ── Admin panel UI ───────────────────────────────────────────────────────────
-
   function openAdd() {
     setForm(emptyForm);
     setEditingId(null);
     setShowForm(true);
-    setFeedback("");
+    setFeedback(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function openEdit(manga: MangaItem) {
+  function openEdit(manga: Manga) {
     setForm({
       title: manga.title,
       author: manga.author,
       genre: manga.genre,
       price: String(manga.price),
-      coverImageUrl: manga.coverImage.getDirectURL(),
-      synopsis: manga.synopsis,
-      volumeCount: String(Number(manga.volumeCount)),
+      coverImage: manga.coverImage,
+      description: manga.description,
       stock: String(Number(manga.stock)),
-      isFeatured: manga.isFeatured,
-      isNew: manga.isNew,
     });
     setEditingId(manga.id);
     setShowForm(true);
-    setFeedback("");
+    setFeedback(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function handleDelete(id: bigint) {
+  async function handleDelete(id: string) {
     if (!window.confirm("Delete this manga listing? This cannot be undone."))
       return;
     try {
-      await backend.removeManga(id);
-      await loadManga();
+      await deleteManga.mutateAsync(id);
+      setFeedback({ type: "success", msg: "Manga deleted successfully." });
     } catch (err) {
-      alert(`Failed to delete: ${String(err)}`);
+      setFeedback({ type: "error", msg: `Failed to delete: ${String(err)}` });
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
-    setFeedback("");
+    setFeedback(null);
+
+    const mangaData: Manga = {
+      id: editingId ?? crypto.randomUUID(),
+      title: form.title,
+      author: form.author,
+      genre: form.genre,
+      price: Number.parseFloat(form.price),
+      coverImage: form.coverImage,
+      description: form.description,
+      stock: BigInt(Number.parseInt(form.stock) || 0),
+      createdAt: BigInt(Date.now()),
+    };
+
     try {
-      const mangaData: MangaItem = {
-        id: editingId ?? BigInt(0),
-        title: form.title,
-        author: form.author,
-        genre: form.genre,
-        price: Number.parseFloat(form.price),
-        coverImage: ExternalBlob.fromURL(
-          form.coverImageUrl ||
-            `https://placehold.co/300x450/141416/C7A24A?text=${encodeURIComponent(form.title)}`,
-        ),
-        synopsis: form.synopsis,
-        volumeCount: BigInt(Number.parseInt(form.volumeCount) || 1),
-        stock: BigInt(Number.parseInt(form.stock) || 0),
-        isFeatured: form.isFeatured,
-        isNew: form.isNew,
-        createdAt: BigInt(Date.now()),
-      };
-
       if (editingId !== null) {
-        await backend.updateManga(mangaData);
-        setFeedback("Manga updated successfully!");
+        await updateManga.mutateAsync(mangaData);
+        setFeedback({ type: "success", msg: "Manga updated successfully!" });
       } else {
-        await backend.addManga(mangaData);
-        setFeedback("Manga added successfully!");
+        await addManga.mutateAsync(mangaData);
+        setFeedback({ type: "success", msg: "Manga added successfully!" });
       }
-
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
-      await loadManga();
     } catch (err) {
-      setFeedback(`Error: ${String(err)}`);
-    } finally {
-      setSaving(false);
+      setFeedback({ type: "error", msg: `Error: ${String(err)}` });
     }
   }
 
-  const inputStyle = {
+  const isSaving = addManga.isPending || updateManga.isPending;
+
+  const inputStyle: React.CSSProperties = {
     backgroundColor: "#1D1D20",
     border: "1px solid #2A2A2E",
     color: "#F2F2F2",
@@ -376,7 +350,6 @@ export default function AdminPage() {
 
   return (
     <div style={{ backgroundColor: "#0B0B0C", minHeight: "100vh" }}>
-      <style>{spinnerCss}</style>
       <div
         className="py-10"
         style={{
@@ -397,15 +370,15 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={openAdd}
+              data-ocid="admin.add.primary_button"
               className="manga-btn-primary flex items-center gap-2"
-              data-ocid="admin.primary_button"
             >
               <Plus className="w-4 h-4" /> Add Manga
             </button>
             <button
               type="button"
               onClick={() => setUnlocked(false)}
-              data-ocid="admin.secondary_button"
+              data-ocid="admin.lock.secondary_button"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -438,23 +411,33 @@ export default function AdminPage() {
         {feedback && (
           <div
             className="mb-4 p-3 rounded-lg text-sm flex items-center gap-2"
+            data-ocid={
+              feedback.type === "success"
+                ? "admin.success_state"
+                : "admin.error_state"
+            }
             style={{
-              backgroundColor: feedback.startsWith("Error")
-                ? "#2A0A0A"
-                : "#0A2A0A",
-              border: `1px solid ${feedback.startsWith("Error") ? "#A12B2B" : "#2A6A2A"}`,
-              color: feedback.startsWith("Error") ? "#f87171" : "#4ade80",
+              backgroundColor:
+                feedback.type === "error" ? "#2A0A0A" : "#0A2A0A",
+              border: `1px solid ${
+                feedback.type === "error" ? "#A12B2B" : "#2A6A2A"
+              }`,
+              color: feedback.type === "error" ? "#f87171" : "#4ade80",
             }}
           >
             <Check className="w-4 h-4" />
-            {feedback}
+            {feedback.msg}
           </div>
         )}
 
         {showForm && (
           <div
             className="mb-8 p-6 rounded-xl"
-            style={{ backgroundColor: "#141416", border: "1px solid #C7A24A" }}
+            data-ocid="admin.form.panel"
+            style={{
+              backgroundColor: "#141416",
+              border: "1px solid #C7A24A",
+            }}
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="manga-section-heading text-lg">
@@ -467,6 +450,7 @@ export default function AdminPage() {
                   setEditingId(null);
                   setForm(emptyForm);
                 }}
+                data-ocid="admin.form.close_button"
                 style={{ color: "#A6A6AA" }}
               >
                 <X className="w-5 h-5" />
@@ -491,7 +475,8 @@ export default function AdminPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, title: e.target.value }))
                     }
-                    placeholder="e.g. Attack on Titan"
+                    data-ocid="admin.title.input"
+                    placeholder="e.g. Dragon Ascent"
                   />
                 </div>
 
@@ -511,7 +496,8 @@ export default function AdminPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, author: e.target.value }))
                     }
-                    placeholder="e.g. Hajime Isayama"
+                    data-ocid="admin.author.input"
+                    placeholder="e.g. The I&I Team"
                   />
                 </div>
 
@@ -531,6 +517,7 @@ export default function AdminPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, genre: e.target.value }))
                     }
+                    data-ocid="admin.genre.select"
                   >
                     {GENRES.map((g) => (
                       <option key={g} value={g}>
@@ -546,20 +533,21 @@ export default function AdminPage() {
                     className="text-xs uppercase tracking-wide"
                     style={{ color: "#A6A6AA" }}
                   >
-                    Price (USD) *
+                    Price (₹) *
                   </label>
                   <input
                     id="field-price"
                     required
                     type="number"
-                    min="0.01"
-                    step="0.01"
+                    min="1"
+                    step="1"
                     style={inputStyle}
                     value={form.price}
                     onChange={(e) =>
                       setForm((f) => ({ ...f, price: e.target.value }))
                     }
-                    placeholder="e.g. 14.99"
+                    data-ocid="admin.price.input"
+                    placeholder="e.g. 499"
                   />
                 </div>
 
@@ -574,120 +562,67 @@ export default function AdminPage() {
                   <input
                     id="field-cover"
                     style={inputStyle}
-                    value={form.coverImageUrl}
+                    value={form.coverImage}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, coverImageUrl: e.target.value }))
+                      setForm((f) => ({ ...f, coverImage: e.target.value }))
                     }
+                    data-ocid="admin.cover.input"
                     placeholder="https://example.com/cover.jpg"
                   />
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="flex flex-col gap-1 flex-1">
-                    <label
-                      htmlFor="field-volumes"
-                      className="text-xs uppercase tracking-wide"
-                      style={{ color: "#A6A6AA" }}
-                    >
-                      Volumes
-                    </label>
-                    <input
-                      id="field-volumes"
-                      type="number"
-                      min="1"
-                      style={inputStyle}
-                      value={form.volumeCount}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, volumeCount: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 flex-1">
-                    <label
-                      htmlFor="field-stock"
-                      className="text-xs uppercase tracking-wide"
-                      style={{ color: "#A6A6AA" }}
-                    >
-                      Stock
-                    </label>
-                    <input
-                      id="field-stock"
-                      type="number"
-                      min="0"
-                      style={inputStyle}
-                      value={form.stock}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, stock: e.target.value }))
-                      }
-                    />
-                  </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="field-stock"
+                    className="text-xs uppercase tracking-wide"
+                    style={{ color: "#A6A6AA" }}
+                  >
+                    Stock
+                  </label>
+                  <input
+                    id="field-stock"
+                    type="number"
+                    min="0"
+                    style={inputStyle}
+                    value={form.stock}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, stock: e.target.value }))
+                    }
+                    data-ocid="admin.stock.input"
+                  />
                 </div>
 
                 <div className="md:col-span-2 flex flex-col gap-1">
                   <label
-                    htmlFor="field-synopsis"
+                    htmlFor="field-description"
                     className="text-xs uppercase tracking-wide"
                     style={{ color: "#A6A6AA" }}
                   >
-                    Synopsis
+                    Description
                   </label>
                   <textarea
-                    id="field-synopsis"
+                    id="field-description"
                     rows={3}
                     style={{ ...inputStyle, resize: "vertical" }}
-                    value={form.synopsis}
+                    value={form.description}
                     onChange={(e) =>
-                      setForm((f) => ({ ...f, synopsis: e.target.value }))
+                      setForm((f) => ({ ...f, description: e.target.value }))
                     }
+                    data-ocid="admin.description.textarea"
                     placeholder="Brief description of the manga..."
                   />
-                </div>
-
-                <div className="flex gap-6">
-                  <label
-                    htmlFor="field-featured"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      id="field-featured"
-                      type="checkbox"
-                      checked={form.isFeatured}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, isFeatured: e.target.checked }))
-                      }
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm" style={{ color: "#F2F2F2" }}>
-                      Featured
-                    </span>
-                  </label>
-                  <label
-                    htmlFor="field-new"
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <input
-                      id="field-new"
-                      type="checkbox"
-                      checked={form.isNew}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, isNew: e.target.checked }))
-                      }
-                      className="w-4 h-4"
-                    />
-                    <span className="text-sm" style={{ color: "#F2F2F2" }}>
-                      New Arrival
-                    </span>
-                  </label>
                 </div>
               </div>
 
               <div className="flex gap-3 mt-6">
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={isSaving}
+                  data-ocid="admin.form.submit_button"
                   className="manga-btn-primary flex items-center gap-2"
                 >
-                  {saving
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSaving
                     ? "Saving..."
                     : editingId !== null
                       ? "Update Manga"
@@ -700,6 +635,7 @@ export default function AdminPage() {
                     setEditingId(null);
                     setForm(emptyForm);
                   }}
+                  data-ocid="admin.form.cancel_button"
                   className="manga-btn-outline"
                 >
                   Cancel
@@ -709,24 +645,21 @@ export default function AdminPage() {
           </div>
         )}
 
-        {loading ? (
-          <div className="text-center py-12" style={{ color: "#A6A6AA" }}>
-            <div
-              style={{
-                width: "32px",
-                height: "32px",
-                border: "3px solid #2A2A2E",
-                borderTopColor: "#C7A24A",
-                borderRadius: "50%",
-                animation: "spin 0.75s linear infinite",
-                margin: "0 auto 0.75rem",
-              }}
+        {isLoading || clearAllManga.isPending ? (
+          <div
+            className="text-center py-12"
+            data-ocid="admin.loading_state"
+            style={{ color: "#A6A6AA" }}
+          >
+            <Loader2
+              className="w-8 h-8 animate-spin mx-auto mb-3"
+              style={{ color: "#C7A24A" }}
             />
             Loading manga list...
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" data-ocid="admin.manga.table">
               <thead>
                 <tr style={{ borderBottom: "1px solid #2A2A2E" }}>
                   {[
@@ -735,9 +668,8 @@ export default function AdminPage() {
                     "Title",
                     "Author",
                     "Genre",
-                    "Price",
+                    "Price (₹)",
                     "Stock",
-                    "Flags",
                     "Actions",
                   ].map((h) => (
                     <th
@@ -753,7 +685,8 @@ export default function AdminPage() {
               <tbody>
                 {mangaList.map((manga, idx) => (
                   <tr
-                    key={String(manga.id)}
+                    key={manga.id}
+                    data-ocid={`admin.manga.row.${idx + 1}`}
                     style={{ borderBottom: "1px solid #1A1A1D" }}
                   >
                     <td className="py-3 px-3" style={{ color: "#A6A6AA" }}>
@@ -761,7 +694,10 @@ export default function AdminPage() {
                     </td>
                     <td className="py-3 px-3">
                       <img
-                        src={manga.coverImage.getDirectURL()}
+                        src={
+                          manga.coverImage ||
+                          `https://placehold.co/40x60/141416/C7A24A?text=${encodeURIComponent(manga.title)}`
+                        }
                         alt={manga.title}
                         className="w-8 h-12 object-cover rounded"
                         style={{ border: "1px solid #2A2A2E" }}
@@ -785,7 +721,10 @@ export default function AdminPage() {
                     <td className="py-3 px-3">
                       <span
                         className="text-xs font-bold uppercase px-2 py-0.5 rounded"
-                        style={{ backgroundColor: "#A12B2B", color: "#F2F2F2" }}
+                        style={{
+                          backgroundColor: "#A12B2B",
+                          color: "#F2F2F2",
+                        }}
                       >
                         {manga.genre}
                       </span>
@@ -794,7 +733,7 @@ export default function AdminPage() {
                       className="py-3 px-3 font-bold"
                       style={{ color: "#F2F2F2" }}
                     >
-                      ${manga.price.toFixed(2)}
+                      ₹{manga.price.toFixed(2)}
                     </td>
                     <td
                       className="py-3 px-3"
@@ -805,36 +744,11 @@ export default function AdminPage() {
                       {Number(manga.stock)}
                     </td>
                     <td className="py-3 px-3">
-                      <div className="flex gap-1">
-                        {manga.isFeatured && (
-                          <span
-                            className="text-xs px-1.5 py-0.5 rounded font-bold"
-                            style={{
-                              backgroundColor: "#C7A24A",
-                              color: "#0B0B0C",
-                            }}
-                          >
-                            F
-                          </span>
-                        )}
-                        {manga.isNew && (
-                          <span
-                            className="text-xs px-1.5 py-0.5 rounded font-bold"
-                            style={{
-                              backgroundColor: "#A12B2B",
-                              color: "#F2F2F2",
-                            }}
-                          >
-                            N
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-3 px-3">
                       <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={() => openEdit(manga)}
+                          data-ocid={`admin.manga.edit_button.${idx + 1}`}
                           className="p-1.5 rounded transition-colors"
                           style={{
                             color: "#C7A24A",
@@ -847,6 +761,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => handleDelete(manga.id)}
+                          data-ocid={`admin.manga.delete_button.${idx + 1}`}
                           className="p-1.5 rounded transition-colors"
                           style={{
                             color: "#f87171",
@@ -863,7 +778,11 @@ export default function AdminPage() {
               </tbody>
             </table>
             {mangaList.length === 0 && (
-              <div className="text-center py-12" style={{ color: "#A6A6AA" }}>
+              <div
+                className="text-center py-12"
+                data-ocid="admin.manga.empty_state"
+                style={{ color: "#A6A6AA" }}
+              >
                 No manga listings found. Add your first one!
               </div>
             )}

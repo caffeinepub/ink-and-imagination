@@ -1,66 +1,45 @@
 import { SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { backend } from "../actorClient";
-import type { MangaItem } from "../actorClient";
+import { useMemo, useState } from "react";
 import MangaCard from "../components/MangaCard";
 import SkeletonCard from "../components/SkeletonCard";
+import { useListAllManga } from "../hooks/useQueries";
 
 const GENRES = [
   "All",
   "Action",
+  "Adventure",
   "Fantasy",
   "Horror",
+  "Mystery",
   "Sci-Fi",
-  "Thriller",
-  "Slice of Life",
-  "Shounen",
   "Seinen",
-  "Dark Fantasy",
-  "Historical",
-  "Comedy",
+  "Shojo",
+  "Shonen",
 ];
 
 const SORT_OPTIONS = [
-  { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest" },
+  { value: "default", label: "Default" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
-  { value: "title_az", label: "Title A-Z" },
+  { value: "title_az", label: "Title A–Z" },
+  { value: "newest", label: "Newest" },
 ];
 
 export default function ShopPage() {
-  const [allManga, setAllManga] = useState<MangaItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: allManga = [], isLoading } = useListAllManga();
   const [selectedGenre, setSelectedGenre] = useState("All");
-  const [priceMin, setPriceMin] = useState(0);
-  const [priceMax, setPriceMax] = useState(50);
-  const [sortBy, setSortBy] = useState("featured");
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("default");
   const [showFilters, setShowFilters] = useState(false);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        let all = await backend.getAllManga();
-        if (all.length === 0) {
-          await backend.seedSampleData();
-          all = await backend.getAllManga();
-        }
-        setAllManga(all);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
 
   const filtered = useMemo(() => {
     let result = allManga.filter((m) => {
       const genreMatch = selectedGenre === "All" || m.genre === selectedGenre;
-      const priceMatch = m.price >= priceMin && m.price <= priceMax;
-      return genreMatch && priceMatch;
+      const searchMatch =
+        search === "" ||
+        m.title.toLowerCase().includes(search.toLowerCase()) ||
+        m.author.toLowerCase().includes(search.toLowerCase());
+      return genreMatch && searchMatch;
     });
 
     switch (sortBy) {
@@ -77,16 +56,46 @@ export default function ShopPage() {
         result = [...result].sort((a, b) => a.title.localeCompare(b.title));
         break;
       default:
-        result = [...result].sort(
-          (a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0),
-        );
+        break;
     }
 
     return result;
-  }, [allManga, selectedGenre, priceMin, priceMax, sortBy]);
+  }, [allManga, selectedGenre, search, sortBy]);
+
+  const hasActiveFilters =
+    selectedGenre !== "All" || search !== "" || sortBy !== "default";
+
+  function clearFilters() {
+    setSelectedGenre("All");
+    setSearch("");
+    setSortBy("default");
+  }
 
   const FilterSidebar = () => (
     <div className="flex flex-col gap-6">
+      {/* Search */}
+      <div>
+        <h3
+          className="text-xs font-bold uppercase tracking-widest mb-3"
+          style={{ color: "#F2F2F2" }}
+        >
+          Search
+        </h3>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Title or author..."
+          data-ocid="shop.search_input"
+          className="w-full px-3 py-2 rounded text-sm outline-none"
+          style={{
+            backgroundColor: "#1D1D20",
+            border: "1px solid #2A2A2E",
+            color: "#F2F2F2",
+          }}
+        />
+      </div>
+
       {/* Genre */}
       <div>
         <h3
@@ -101,78 +110,20 @@ export default function ShopPage() {
               key={genre}
               type="button"
               onClick={() => setSelectedGenre(genre)}
+              data-ocid="shop.genre.tab"
               className="text-xs font-bold uppercase px-3 py-1.5 rounded-full transition-all duration-150"
               style={{
                 backgroundColor:
                   selectedGenre === genre ? "#A12B2B" : "#1A1A1D",
-                border: `1px solid ${selectedGenre === genre ? "#A12B2B" : "#2A2A2E"}`,
+                border: `1px solid ${
+                  selectedGenre === genre ? "#A12B2B" : "#2A2A2E"
+                }`,
                 color: selectedGenre === genre ? "#F2F2F2" : "#A6A6AA",
               }}
             >
               {genre}
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Price range */}
-      <div>
-        <h3
-          className="text-xs font-bold uppercase tracking-widest mb-3"
-          style={{ color: "#F2F2F2" }}
-        >
-          Price Range
-        </h3>
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="price-min"
-              className="text-xs"
-              style={{ color: "#A6A6AA" }}
-            >
-              Min
-            </label>
-            <input
-              id="price-min"
-              type="number"
-              min={0}
-              max={priceMax}
-              value={priceMin}
-              onChange={(e) => setPriceMin(Number(e.target.value))}
-              className="w-20 px-2 py-1.5 rounded text-sm outline-none"
-              style={{
-                backgroundColor: "#1D1D20",
-                border: "1px solid #2A2A2E",
-                color: "#F2F2F2",
-              }}
-            />
-          </div>
-          <span className="mt-4" style={{ color: "#A6A6AA" }}>
-            —
-          </span>
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="price-max"
-              className="text-xs"
-              style={{ color: "#A6A6AA" }}
-            >
-              Max
-            </label>
-            <input
-              id="price-max"
-              type="number"
-              min={priceMin}
-              max={100}
-              value={priceMax}
-              onChange={(e) => setPriceMax(Number(e.target.value))}
-              className="w-20 px-2 py-1.5 rounded text-sm outline-none"
-              style={{
-                backgroundColor: "#1D1D20",
-                border: "1px solid #2A2A2E",
-                color: "#F2F2F2",
-              }}
-            />
-          </div>
         </div>
       </div>
 
@@ -187,6 +138,7 @@ export default function ShopPage() {
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
+          data-ocid="shop.sort.select"
           className="w-full px-3 py-2 rounded text-sm outline-none"
           style={{
             backgroundColor: "#1D1D20",
@@ -203,18 +155,11 @@ export default function ShopPage() {
       </div>
 
       {/* Reset */}
-      {(selectedGenre !== "All" ||
-        priceMin !== 0 ||
-        priceMax !== 50 ||
-        sortBy !== "featured") && (
+      {hasActiveFilters && (
         <button
           type="button"
-          onClick={() => {
-            setSelectedGenre("All");
-            setPriceMin(0);
-            setPriceMax(50);
-            setSortBy("featured");
-          }}
+          onClick={clearFilters}
+          data-ocid="shop.filters.button"
           className="text-xs flex items-center gap-1 mt-1"
           style={{ color: "#A6A6AA" }}
         >
@@ -239,7 +184,7 @@ export default function ShopPage() {
             Manga Shop
           </h1>
           <p className="mt-2 text-sm" style={{ color: "#A6A6AA" }}>
-            Discover your next favourite series
+            Original manga created and published by our team
           </p>
         </div>
       </div>
@@ -253,6 +198,7 @@ export default function ShopPage() {
           <button
             type="button"
             onClick={() => setShowFilters((v) => !v)}
+            data-ocid="shop.filters.toggle"
             className="flex items-center gap-2 text-xs font-bold uppercase px-3 py-2 rounded"
             style={{ border: "1px solid #2A2A2E", color: "#F2F2F2" }}
           >
@@ -295,7 +241,7 @@ export default function ShopPage() {
               </span>
             </div>
 
-            {loading ? (
+            {isLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 12 }).map((_, i) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders
@@ -303,7 +249,10 @@ export default function ShopPage() {
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <div
+                className="flex flex-col items-center justify-center py-24 gap-4"
+                data-ocid="shop.manga.empty_state"
+              >
                 <p
                   className="font-display text-2xl"
                   style={{ color: "#A6A6AA" }}
@@ -315,9 +264,12 @@ export default function ShopPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"
+                data-ocid="shop.manga.list"
+              >
                 {filtered.map((manga) => (
-                  <MangaCard key={String(manga.id)} manga={manga} />
+                  <MangaCard key={manga.id} manga={manga} />
                 ))}
               </div>
             )}

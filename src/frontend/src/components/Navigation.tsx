@@ -31,7 +31,11 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link
+            to="/"
+            className="flex items-center gap-2 shrink-0"
+            data-ocid="nav.link"
+          >
             <BookOpen className="w-6 h-6" style={{ color: "#C7A24A" }} />
             <span
               className="font-display text-lg tracking-widest"
@@ -47,6 +51,7 @@ export default function Navigation() {
               <Link
                 key={link.to}
                 to={link.to}
+                data-ocid="nav.link"
                 className="text-xs font-bold tracking-widest uppercase transition-colors duration-150"
                 style={{
                   color: isActive(link.to) ? "#A12B2B" : "#F2F2F2",
@@ -60,7 +65,7 @@ export default function Navigation() {
           {/* Right side */}
           <div className="flex items-center gap-4">
             {/* Cart */}
-            <Link to="/cart" className="relative">
+            <Link to="/cart" className="relative" data-ocid="nav.cart.link">
               <ShoppingCart
                 className="w-5 h-5"
                 style={{ color: isActive("/cart") ? "#A12B2B" : "#F2F2F2" }}
@@ -85,6 +90,7 @@ export default function Navigation() {
               className="md:hidden"
               onClick={() => setMobileOpen((o) => !o)}
               aria-label="Toggle menu"
+              data-ocid="nav.toggle"
               style={{ color: "#F2F2F2" }}
             >
               {mobileOpen ? (
@@ -107,6 +113,7 @@ export default function Navigation() {
                 key={link.to}
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
+                data-ocid="nav.link"
                 className="text-sm font-bold tracking-widest uppercase py-1"
                 style={{
                   color: isActive(link.to) ? "#A12B2B" : "#F2F2F2",
@@ -115,6 +122,15 @@ export default function Navigation() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              to="/cart"
+              onClick={() => setMobileOpen(false)}
+              data-ocid="nav.cart.link"
+              className="text-sm font-bold tracking-widest uppercase py-1"
+              style={{ color: isActive("/cart") ? "#A12B2B" : "#F2F2F2" }}
+            >
+              CART {cartCount > 0 ? `(${cartCount})` : ""}
+            </Link>
           </div>
         )}
       </div>

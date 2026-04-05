@@ -7,29 +7,19 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export class ExternalBlob {
-    getBytes(): Promise<Uint8Array<ArrayBuffer>>;
-    getDirectURL(): string;
-    static fromURL(url: string): ExternalBlob;
-    static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
-    withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
-}
-export interface MangaItem {
-    id: bigint;
-    title: string;
-    createdAt: bigint;
-    author: string;
-    coverImage: ExternalBlob;
-    stock: bigint;
-    synopsis: string;
-    isFeatured: boolean;
-    genre: string;
-    isNew: boolean;
-    price: number;
-    volumeCount: bigint;
-}
 export interface UserProfile {
     name: string;
+}
+export interface Manga {
+    id: string;
+    title: string;
+    createdAt: bigint;
+    description: string;
+    author: string;
+    coverImage: string;
+    stock: bigint;
+    genre: string;
+    price: number;
 }
 export enum UserRole {
     admin = "admin",
@@ -37,21 +27,17 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
-    addManga(newManga: MangaItem): Promise<MangaItem>;
+    addManga(manga: Manga): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    getAllManga(): Promise<Array<MangaItem>>;
-    getByGenre(genre: string): Promise<Array<MangaItem>>;
-    getByPriceRange(minPrice: number, maxPrice: number): Promise<Array<MangaItem>>;
+    clearAllManga(): Promise<void>;
+    deleteManga(id: string): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getFeaturedManga(): Promise<Array<MangaItem>>;
-    getMangaById(id: bigint): Promise<MangaItem>;
-    getNewArrivals(): Promise<Array<MangaItem>>;
+    getMangaById(id: string): Promise<Manga>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
-    removeManga(id: bigint): Promise<void>;
+    listAllManga(): Promise<Array<Manga>>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    searchByTitle(title: string): Promise<Array<MangaItem>>;
-    seedSampleData(): Promise<void>;
-    updateManga(manga: MangaItem): Promise<void>;
+    seedManga(): Promise<void>;
+    updateManga(manga: Manga): Promise<void>;
 }

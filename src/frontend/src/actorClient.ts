@@ -4,7 +4,7 @@ import type { backendInterface } from "./backend";
 import { ExternalBlob } from "./backend";
 import { createActorWithConfig } from "./config";
 
-export type { MangaItem, UserProfile, UserRole } from "./backend";
+export type { Manga, UserProfile, UserRole } from "./backend";
 export { ExternalBlob } from "./backend";
 
 let _actorPromise: Promise<backendInterface> | null = null;

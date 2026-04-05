@@ -1,21 +1,21 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, ChevronRight, Mail, Truck, Users } from "lucide-react";
+import { BookOpen, ChevronRight, Mail, Pen, Users } from "lucide-react";
 
 const features = [
   {
-    icon: <BookOpen className="w-6 h-6" />,
-    title: "Curated Selection",
-    desc: "Every title in our catalog is handpicked by passionate manga fans. We only stock the best from every genre.",
+    icon: <Pen className="w-6 h-6" />,
+    title: "Original Creations",
+    desc: "Every title in our catalog is an original story written, illustrated, and published by our own team. No reprints, no licensing — pure original manga.",
   },
   {
-    icon: <Truck className="w-6 h-6" />,
-    title: "Fast Shipping",
-    desc: "Orders dispatched within 24 hours. Worldwide shipping available with tracking on every order.",
+    icon: <BookOpen className="w-6 h-6" />,
+    title: "Craft & Passion",
+    desc: "We pour our hearts into every page. From world-building to character design, each manga is a labour of love crafted with intention and artistic commitment.",
   },
   {
     icon: <Users className="w-6 h-6" />,
-    title: "Community First",
-    desc: "More than a store — we're a home for manga fans. Join our community, discover new series, share your love.",
+    title: "Community Driven",
+    desc: "Our readers inspire us every day. We build for you — listening to feedback, growing our universe, and creating stories that resonate.",
   },
 ];
 
@@ -50,9 +50,9 @@ export default function AboutPage() {
             className="text-lg max-w-2xl mx-auto leading-relaxed"
             style={{ color: "#A6A6AA" }}
           >
-            Born from a love of manga and a belief that great stories deserve
-            great homes. We Started In 2026 as a small passion project and have
-            grown into one of the most trusted manga destinations on the web.
+            We Started In 2026 as a passionate team of manga creators with a
+            single belief: that original stories, told with honesty and
+            dedication, can move the world.
           </p>
         </div>
       </section>
@@ -70,22 +70,21 @@ export default function AboutPage() {
             className="font-display text-4xl mb-6"
             style={{ color: "#F2F2F2" }}
           >
-            Celebrating Manga Culture Worldwide
+            Creating Manga That Matters
           </h2>
           <p
             className="text-base leading-relaxed mb-4"
             style={{ color: "#A6A6AA" }}
           >
-            Manga is more than entertainment — it's a cultural force that has
-            shaped storytelling across the globe. From the epic battles of
-            shonen to the quiet beauty of slice-of-life, every manga contains a
-            universe worth exploring.
+            We create original manga and bring it directly to you. Every title
+            in our collection is crafted by our team — built from passion,
+            published with purpose.
           </p>
           <p className="text-base leading-relaxed" style={{ color: "#A6A6AA" }}>
-            At Ink &amp; Imagination, our mission is to make that universe
-            accessible to everyone. We curate, we celebrate, and we bring the
-            best of manga directly to your doorstep — no matter where in the
-            world you are.
+            At Ink &amp; Imagination, we don&apos;t curate others&apos; work —
+            we make our own. Our artists and writers collaborate to build worlds
+            you haven&apos;t seen before, with stories that stay with you long
+            after the final page.
           </p>
         </div>
       </section>
@@ -160,9 +159,9 @@ export default function AboutPage() {
             className="text-base leading-relaxed mb-6"
             style={{ color: "#A6A6AA" }}
           >
-            Have a question, a special request, or just want to say hello? We'd
-            love to hear from you. Reach out and we'll get back to you as soon
-            as possible.
+            Have a question about our manga, a special request, or just want to
+            say hello? We&apos;d love to hear from you. Reach out and we&apos;ll
+            get back to you as soon as possible.
           </p>
           <a
             href={`mailto:${CONTACT_EMAIL}`}
@@ -204,14 +203,15 @@ export default function AboutPage() {
             className="font-display text-4xl mb-4"
             style={{ color: "#F2F2F2" }}
           >
-            Ready to Start Your Collection?
+            Ready to Read Our Work?
           </h2>
           <p className="text-base mb-8" style={{ color: "#A6A6AA" }}>
-            Browse hundreds of titles and find your next favourite series.
+            Browse our original titles and find your next favourite series.
           </p>
           <Link
             to="/shop"
             className="manga-btn-primary inline-flex items-center gap-2"
+            data-ocid="about.shop.primary_button"
           >
             Explore the Shop <ChevronRight className="w-4 h-4" />
           </Link>

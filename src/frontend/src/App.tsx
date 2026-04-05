@@ -62,9 +62,9 @@ const shopRoute = createRoute({
   component: ShopPage,
 });
 
-const productRoute = createRoute({
+const mangaRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/product/$id",
+  path: "/manga/$id",
   component: ProductPage,
 });
 
@@ -89,7 +89,7 @@ const adminRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   shopRoute,
-  productRoute,
+  mangaRoute,
   cartRoute,
   aboutRoute,
   adminRoute,

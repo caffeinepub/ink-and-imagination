@@ -19,20 +19,16 @@ export const _CaffeineStorageRefillResult = IDL.Record({
   'success' : IDL.Opt(IDL.Bool),
   'topped_up_amount' : IDL.Opt(IDL.Nat),
 });
-export const ExternalBlob = IDL.Vec(IDL.Nat8);
-export const MangaItem = IDL.Record({
-  'id' : IDL.Nat,
+export const Manga = IDL.Record({
+  'id' : IDL.Text,
   'title' : IDL.Text,
   'createdAt' : IDL.Int,
+  'description' : IDL.Text,
   'author' : IDL.Text,
-  'coverImage' : ExternalBlob,
+  'coverImage' : IDL.Text,
   'stock' : IDL.Nat,
-  'synopsis' : IDL.Text,
-  'isFeatured' : IDL.Bool,
   'genre' : IDL.Text,
-  'isNew' : IDL.Bool,
   'price' : IDL.Float64,
-  'volumeCount' : IDL.Nat,
 });
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
@@ -69,31 +65,23 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-  'addManga' : IDL.Func([MangaItem], [MangaItem], []),
+  'addManga' : IDL.Func([Manga], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'getAllManga' : IDL.Func([], [IDL.Vec(MangaItem)], ['query']),
-  'getByGenre' : IDL.Func([IDL.Text], [IDL.Vec(MangaItem)], ['query']),
-  'getByPriceRange' : IDL.Func(
-      [IDL.Float64, IDL.Float64],
-      [IDL.Vec(MangaItem)],
-      ['query'],
-    ),
+  'clearAllManga' : IDL.Func([], [], []),
+  'deleteManga' : IDL.Func([IDL.Text], [], []),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getFeaturedManga' : IDL.Func([], [IDL.Vec(MangaItem)], ['query']),
-  'getMangaById' : IDL.Func([IDL.Nat], [MangaItem], ['query']),
-  'getNewArrivals' : IDL.Func([], [IDL.Vec(MangaItem)], ['query']),
+  'getMangaById' : IDL.Func([IDL.Text], [Manga], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'removeManga' : IDL.Func([IDL.Nat], [], []),
+  'listAllManga' : IDL.Func([], [IDL.Vec(Manga)], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'searchByTitle' : IDL.Func([IDL.Text], [IDL.Vec(MangaItem)], ['query']),
-  'seedSampleData' : IDL.Func([], [], []),
-  'updateManga' : IDL.Func([MangaItem], [], []),
+  'seedManga' : IDL.Func([], [], []),
+  'updateManga' : IDL.Func([Manga], [], []),
 });
 
 export const idlInitArgs = [];
@@ -110,20 +98,16 @@ export const idlFactory = ({ IDL }) => {
     'success' : IDL.Opt(IDL.Bool),
     'topped_up_amount' : IDL.Opt(IDL.Nat),
   });
-  const ExternalBlob = IDL.Vec(IDL.Nat8);
-  const MangaItem = IDL.Record({
-    'id' : IDL.Nat,
+  const Manga = IDL.Record({
+    'id' : IDL.Text,
     'title' : IDL.Text,
     'createdAt' : IDL.Int,
+    'description' : IDL.Text,
     'author' : IDL.Text,
-    'coverImage' : ExternalBlob,
+    'coverImage' : IDL.Text,
     'stock' : IDL.Nat,
-    'synopsis' : IDL.Text,
-    'isFeatured' : IDL.Bool,
     'genre' : IDL.Text,
-    'isNew' : IDL.Bool,
     'price' : IDL.Float64,
-    'volumeCount' : IDL.Nat,
   });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
@@ -160,31 +144,23 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-    'addManga' : IDL.Func([MangaItem], [MangaItem], []),
+    'addManga' : IDL.Func([Manga], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'getAllManga' : IDL.Func([], [IDL.Vec(MangaItem)], ['query']),
-    'getByGenre' : IDL.Func([IDL.Text], [IDL.Vec(MangaItem)], ['query']),
-    'getByPriceRange' : IDL.Func(
-        [IDL.Float64, IDL.Float64],
-        [IDL.Vec(MangaItem)],
-        ['query'],
-      ),
+    'clearAllManga' : IDL.Func([], [], []),
+    'deleteManga' : IDL.Func([IDL.Text], [], []),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getFeaturedManga' : IDL.Func([], [IDL.Vec(MangaItem)], ['query']),
-    'getMangaById' : IDL.Func([IDL.Nat], [MangaItem], ['query']),
-    'getNewArrivals' : IDL.Func([], [IDL.Vec(MangaItem)], ['query']),
+    'getMangaById' : IDL.Func([IDL.Text], [Manga], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'removeManga' : IDL.Func([IDL.Nat], [], []),
+    'listAllManga' : IDL.Func([], [IDL.Vec(Manga)], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'searchByTitle' : IDL.Func([IDL.Text], [IDL.Vec(MangaItem)], ['query']),
-    'seedSampleData' : IDL.Func([], [], []),
-    'updateManga' : IDL.Func([MangaItem], [], []),
+    'seedManga' : IDL.Func([], [], []),
+    'updateManga' : IDL.Func([Manga], [], []),
   });
 };
 
