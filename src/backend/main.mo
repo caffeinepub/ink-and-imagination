@@ -44,6 +44,14 @@ actor {
   include MixinAuthorization(accessControlState);
   include MixinStorage();
 
+  // Clear all manga on every upgrade so the shop starts empty
+  system func postupgrade() {
+    let keys = mangas.keys().toArray();
+    for (key in keys.vals()) {
+      mangas.remove(key);
+    };
+  };
+
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can save profiles");
